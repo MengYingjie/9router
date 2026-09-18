@@ -439,6 +439,41 @@ const PROVIDER_MODELS_CONFIG = {
       return { models: [], warning };
     },
   },
+  "qoderwork-cn": {
+    customResolver: async (connection) => {
+      const credentials = {
+        provider: "qoderwork-cn",
+        accessToken: connection.accessToken,
+        refreshToken: connection.refreshToken,
+        email: connection.email,
+        displayName: connection.displayName,
+        providerSpecificData: connection.providerSpecificData || {},
+      };
+      let warning;
+      try {
+        const result = await resolveQoderModels(credentials, { forceRefresh: true });
+        if (result?.models?.length) {
+          return {
+            models: result.models.map((m) => ({
+              // 与聊天路由使用同一标识前缀，仪表盘导入后可直接路由。
+              id: `qoderwork-cn/${m.id}`,
+              name: m.name,
+              contextLength: m.contextLength,
+              isVL: m.isVL,
+              isReasoning: m.isReasoning,
+              maxOutputTokens: m.maxOutputTokens,
+              description: m.description,
+            })),
+          };
+        }
+        warning = "Qoder CN returned no models; falling back to static catalog.";
+      } catch (error) {
+        warning = `Failed to fetch Qoder CN models: ${error.message}`;
+        console.log("Failed to fetch Qoder CN models dynamically, falling back to static:", error.message);
+      }
+      return { models: [], warning };
+    },
+  },
   "gemini-cli": {
     customResolver: buildOAuthResolver({
       refreshFn: (conn) => refreshGoogleToken(conn.refreshToken, GEMINI_CONFIG.clientId, GEMINI_CONFIG.clientSecret),

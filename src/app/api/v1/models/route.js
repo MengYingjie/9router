@@ -47,6 +47,20 @@ const LIVE_MODEL_RESOLVERS = {
     if (!models.length) return null;
     return { models: models.map((m) => ({ id: m.id, name: m.name })) };
   },
+  "qoderwork-cn": async (conn) => {
+    // provider 让实时目录走 CN 网关与 CN 缓存键（与 intl 隔离）。
+    const result = await resolveQoderModels({
+      provider: "qoderwork-cn",
+      accessToken: conn.accessToken,
+      refreshToken: conn.refreshToken,
+      email: conn.email,
+      displayName: conn.displayName,
+      providerSpecificData: conn.providerSpecificData || {}
+    });
+    const models = routableQoderModels(result);
+    if (!models.length) return null;
+    return { models: models.map((m) => ({ id: m.id, name: m.name })) };
+  },
   kimchi: async (conn) => {
     const result = await resolveKimchiModels({
       accessToken: conn.accessToken,
