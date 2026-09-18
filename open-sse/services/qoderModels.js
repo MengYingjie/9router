@@ -18,6 +18,7 @@
  * api3 rejects jt- with "Login expired" (403).
  */
 
+import { getQoderProfile } from "../shared/qoder/profiles.js";
 import { createHash } from "crypto";
 
 import { proxyAwareFetch } from "../utils/proxyFetch.js";
@@ -146,6 +147,7 @@ async function resolvePatCredential(pat, proxyOptions = null, signal = null) {
 export async function resolveQoderCredentials(credentials, proxyOptions = null, signal = null) {
   const raw = credentials?.apiKey || credentials?.accessToken;
   if (isQoderPat(raw)) {
+    if (getQoderProfile(credentials)) throw new Error("Qoder CN requires device OAuth authentication");
     const resolved = await resolvePatCredential(raw, proxyOptions, signal);
     return {
       ...credentials,
@@ -169,7 +171,7 @@ export async function resolveQoderCredentials(credentials, proxyOptions = null, 
 function cacheKey(credentials) {
   const psd = credentials?.providerSpecificData || {};
   const seed = psd.userId || credentials?.refreshToken || credentials?.accessToken || "anonymous";
-  return createHash("sha256").update(`qoder:${seed}`).digest("hex");
+  return createHash("sha256").update(`${getQoderProfile(credentials)?.id || "qoder"}:${seed}`).digest("hex");
 }
 
 /**
@@ -183,6 +185,9 @@ function cosyCredsFromConnection(credentials) {
     name: credentials.displayName || "",
     email: credentials.email || "",
     machineId: psd.machineId || "",
+    machineToken: psd.machineToken || "",
+    provider: credentials.provider,
+    providerSpecificData: psd,
   };
 }
 
@@ -198,9 +203,10 @@ async function fetchQoderCatalogRaw(credentials, signal, proxyOptions = null) {
 
   // Job-token traffic is rejected by api3 ("Login expired" 403) — the
   // official qodercli serves it from api2 instead.
-  const modelListUrl = String(creds.authToken).startsWith("jt-")
+  const profile = getQoderProfile(credentials);
+  const modelListUrl = profile?.modelListUrl || (String(creds.authToken).startsWith("jt-")
     ? `${QODER_CHAT_BASE_ALT}/algo/api/v2/model/list`
-    : QODER_MODEL_LIST_URL;
+    : QODER_MODEL_LIST_URL);
 
   const headers = {
     Accept: "application/json",

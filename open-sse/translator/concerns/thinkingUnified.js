@@ -245,6 +245,14 @@ function applyFormat(fmt, body, cfg, caps, supportedLevels, display) {
       if (level) body.reasoning_effort = normalizeOpenAILevel(level, supportedLevels);
       break;
     }
+    case "qoder": {
+      // Qoder (intl + CN) accepts the full effort enum none..max verbatim in
+      // parameters.reasoning_effort — pure passthrough, do NOT clamp "max".
+      if (none && canDisable) { body.reasoning_effort = "none"; break; }
+      const level = toLevel(eff);
+      if (level) body.reasoning_effort = level;
+      break;
+    }
     case "claude-adaptive": {
       if (none && canDisable) { body.thinking = { type: "disabled" }; break; }
       // Models that can disable thinking need the explicit adaptive switch.

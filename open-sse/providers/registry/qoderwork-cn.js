@@ -1,0 +1,48 @@
+import { QODER_CN_PROFILE as profile } from "../../shared/qoder/profiles.js";
+
+export default {
+  id: "qoderwork-cn",
+  priority: 85,
+  alias: "qdcn",
+  uiAlias: "qdcn",
+  display: {
+    name: "Qoder CN",
+    icon: "water_drop",
+    color: "#DB2777",
+    website: "https://qoder.com.cn",
+    notice: { signupUrl: "https://qoder.com.cn" },
+  },
+  category: "oauth",
+  hasOAuth: true,
+  authModes: ["oauth"],
+  transport: {
+    baseUrl: `${profile.chatBase}/algo/api/v2/service/pro/sse/agent_chat_generation`,
+    headers: {},
+    timeoutMs: 120000,
+    usage: { url: profile.quotaUrl },
+  },
+  models: [
+    { id: "auto", name: "Auto" },
+    { id: "qmodel_preview", name: "Qwen3.8-Max-Preview" },
+    { id: "qmodel_latest", name: "Qwen3.7-Max" },
+    { id: "qmodel", name: "Qwen3.7-Plus" },
+    { id: "q36fmodel", name: "Qwen3.6-Flash" },
+    { id: "dmodel", name: "DeepSeek-V4-Pro" },
+    { id: "dfmodel", name: "DeepSeek-V4-Flash" },
+    { id: "gm51model", name: "GLM-5.2" },
+    { id: "kmodel", name: "Kimi-K2.7-Code" },
+    { id: "mmodel", name: "MiniMax-M2.7" },
+  ],
+  oauth: {
+    openApiBaseUrl: "https://openapi.qoder.com.cn",
+    chatBaseUrl: profile.chatBase,
+    deviceTokenUrl: profile.deviceTokenUrl,
+    refreshUrl: profile.refreshUrl,
+    userInfoUrl: profile.userInfoUrl,
+    quotaUsageUrl: profile.quotaUrl,
+    loginUrl: profile.loginUrl,
+    clientId: profile.clientId,
+    redirectUri: profile.redirectUri,
+  },
+  features: { usage: true, profileRefresh: true },
+};

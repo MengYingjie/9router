@@ -265,6 +265,21 @@ export const PROVIDER_CAPABILITIES = {
     "qfmodel":        { vision: true, reasoning: true, thinkingFormat: "qwen", thinkingCanDisable: false, contextWindow: 1000000, maxOutput: 65536 },  // Qwen3.8-Flash
     "qmodel_38max":   { vision: true, reasoning: true, thinkingFormat: "qwen", thinkingCanDisable: false, contextWindow: 1000000, maxOutput: 65536 },      // Qwen3.8-Max
   },
+  // QoderWork CN (qoderwork-cn) 与 intl 共用私有聊天协议，但 CN 网关接受完整的
+  // reasoning_effort 枚举(none..max) 原样透传，因此使用 qoder thinkingFormat，
+  // 由 executor 写入 parameters.reasoning_effort。CN 型号清单来自 qdcn 注册表。
+  "qoderwork-cn": {
+    "auto":           { vision: true, reasoning: true, thinkingFormat: "qoder", thinkingCanDisable: true, maxOutput: 64000 },
+    "qmodel_preview": { vision: true, reasoning: true, thinkingFormat: "qoder", thinkingCanDisable: true, maxOutput: 64000 },
+    "qmodel_latest":  { vision: true, reasoning: true, thinkingFormat: "qoder", thinkingCanDisable: true, maxOutput: 64000 },
+    "qmodel":         { vision: true, reasoning: true, thinkingFormat: "qoder", thinkingCanDisable: true, maxOutput: 64000 },
+    "q36fmodel":      { vision: true, reasoning: true, thinkingFormat: "qoder", thinkingCanDisable: true, maxOutput: 64000 },
+    "dmodel":         { vision: true, reasoning: true, thinkingFormat: "qoder", thinkingCanDisable: true, maxOutput: 64000 },
+    "dfmodel":        { vision: true, reasoning: false, thinkingFormat: "qoder", thinkingCanDisable: true, maxOutput: 64000 },
+    "gm51model":      { vision: true, reasoning: true, thinkingFormat: "qoder", thinkingCanDisable: true, maxOutput: 64000 },
+    "kmodel":         { vision: true, reasoning: true, thinkingFormat: "qoder", thinkingCanDisable: true, maxOutput: 64000 },
+    "mmodel":         { reasoning: false, thinkingFormat: "openai", thinkingCanDisable: true, maxOutput: 64000 },
+  },
   // Poolside Laguna — OpenAI-compatible, all reasoning-capable (32K max output).
   "poolside": {
     "laguna-s-2.1":  { reasoning: true, thinkingFormat: "openai", contextWindow: 1000000, maxOutput: 32000 },

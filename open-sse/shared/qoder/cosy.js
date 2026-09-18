@@ -13,6 +13,7 @@
  *   Cosy-Machineid, not Cosy-MachineID.
  */
 
+import { getQoderProfile } from "./profiles.js";
 import crypto from "crypto";
 import { v4 as uuidv4 } from "uuid";
 
@@ -147,6 +148,9 @@ export function buildCosyHeaders(body, requestUrl, creds) {
   const sigInput = `${payloadB64}\n${cosyKey}\n${timestamp}\n${bodyBuf.toString("latin1")}\n${sigPath}`;
   const sig = md5Hex(Buffer.from(sigInput, "latin1"));
 
+  const profile = getQoderProfile(creds);
+  const arch = process.arch === "arm64" ? "aarch64" : process.arch === "x64" ? "x86_64" : process.arch;
+  const machineOs = `${arch}_${process.platform === "win32" ? "windows" : process.platform}`;
   const machineId = creds.machineId || generateMachineId();
   const bodyHash = md5Hex(bodyBuf);
   const bodyLength = String(bodyBuf.length);
@@ -158,10 +162,10 @@ export function buildCosyHeaders(body, requestUrl, creds) {
     "Cosy-Date": timestamp,
     "Cosy-Version": QODER_IDE_VERSION,
     "Cosy-Machineid": machineId,
-    "Cosy-Machinetoken": machineId,
+    "Cosy-Machinetoken": creds.machineToken || machineId,
     "Cosy-Machinetype": QODER_MACHINE_TYPE,
-    "Cosy-Machineos": QODER_MACHINE_OS,
-    "Cosy-Clienttype": QODER_CLIENT_TYPE,
+    "Cosy-Machineos": profile ? machineOs : QODER_MACHINE_OS,
+    "Cosy-Clienttype": profile?.clientType || QODER_CLIENT_TYPE,
     "Cosy-Clientip": "127.0.0.1",
     "Cosy-Bodyhash": bodyHash,
     "Cosy-Bodylength": bodyLength,

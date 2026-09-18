@@ -8,6 +8,8 @@
  *   qoder.com/device   - browser landing page for device authorization
  */
 
+import { getQoderProfile } from "./profiles.js";
+
 export const QODER_OPENAPI_BASE = "https://openapi.qoder.sh";
 export const QODER_CENTER_BASE = "https://center.qoder.sh";
 export const QODER_CHAT_BASE = "https://api3.qoder.sh";
@@ -56,6 +58,8 @@ export const QODER_CONTEXT_TIER_MODES = Object.freeze({ AUTO: "auto", MAX: "max"
  * are exchanged for jt- before this is consulted.
  */
 export function qoderInferenceBase(credentials) {
+  const profile = getQoderProfile(credentials);
+  if (profile) return profile.chatBase;
   const raw = credentials?.apiKey || credentials?.accessToken;
   if (
     typeof raw === "string" &&

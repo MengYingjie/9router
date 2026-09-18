@@ -20,6 +20,9 @@
  *     different model upstream, so a missing entry is a hard error.
  */
 
+import { getQoderProfile } from "../shared/qoder/profiles.js";
+import { refreshQoderCnToken } from "../services/tokenRefresh/providers.js";
+import { shouldRefreshCredentials } from "../services/oauthCredentialManager.js";
 import { qoderEncodeBody } from "../shared/qoder/encoding.js";
 import { buildCosyHeaders } from "../shared/qoder/cosy.js";
 import { v4 as uuidv4 } from "uuid";
@@ -207,12 +210,14 @@ function truncate(s, n) {
 /**
  * Map the OpenAI-style request body into the exact shape Qoder expects.
  */
-async function buildQoderRequestBody({ model, body, credentials, log, proxyOptions, signal, uploadFn = null }) {
-  const qoderKey = String(model || "").replace(/^qoder\//, "");
-  
+async function buildQoderRequestBody({ model, body, credentials, log, proxyOptions, signal, uploadFn = null, modelConfig: modelConfigInject = null }) {
+  const profile = getQoderProfile(credentials);
+  const qoderKey = String(model || "").replace(/^(?:qoder|qoderwork-cn|qdcn)\//, "");
+
   // Fetch model config from dynamic API instead of relying on static QODER_MODEL_MAP.
   // This allows support for new Qoder models (e.g., qmodel_latest) without code changes.
-  let modelConfig = await getQoderModelConfig(credentials, qoderKey, { log, proxyOptions, signal });
+  let modelConfig = modelConfigInject || await getQoderModelConfig(credentials, qoderKey, { log, proxyOptions, signal });
+  if (modelConfig && !modelConfig.key) modelConfig = { ...modelConfig, key: qoderKey };
   if (!modelConfig) {
     // Try a forced refresh once before giving up — the cache may simply
     // not be populated yet on first ever call for this credential.
@@ -249,6 +254,11 @@ async function buildQoderRequestBody({ model, body, credentials, log, proxyOptio
     log?.warn?.("QODER", `attachment rewrite failed: ${err.message}`);
   }
 
+  if (profile) {
+    for (const message of incoming) {
+      if (message?.role === "developer") message.role = "system";
+    }
+  }
   const { messages, systemText } = normalizeMessages(incoming);
   const tools = body.tools;
   const isReasoning = !!modelConfig.is_reasoning;
@@ -331,6 +341,36 @@ async function buildQoderRequestBody({ model, body, credentials, log, proxyOptio
     modelConfig,
   };
   if (tierChoice) applyQoderContextTier(built.payload, tierChoice.tier);
+  if (profile) {
+    const payload = built.payload;
+    payload.session_type = profile.sessionType;
+    payload.business.product = profile.sessionType;
+    payload.business.stage = "init";
+    const config = payload.model_config;
+    payload.model_config = {
+      key: qoderKey,
+      display_name: config.display_name || qoderKey,
+      model: "",
+      format: config.format || "openai",
+      is_vl: !!config.is_vl,
+      is_reasoning: !!config.is_reasoning,
+      api_key: "",
+      url: "",
+      source: config.source || "system",
+      max_input_tokens: config.max_input_tokens || 200000,
+    };
+    const effort = body.reasoning_effort ?? body.reasoning?.effort;
+    if (effort && effort !== "auto") payload.parameters.reasoning_effort = effort;
+    else if (isReasoning) payload.parameters.reasoning_effort = "high";
+    if (isReasoning && typeof body.max_thinking_tokens === "number") {
+      payload.parameters.max_thinking_tokens = body.max_thinking_tokens;
+    }
+    if (body.tool_choice !== undefined) payload.parameters.tool_choice = body.tool_choice;
+    const contextLength = body.context_length ?? body.contextWindow;
+    if (typeof contextLength === "number" && contextLength > 0) {
+      payload.parameters.context_length = contextLength;
+    }
+  }
   return built;
 }
 
@@ -551,8 +591,8 @@ async function wrapQoderSSE(response, model) {
 }
 
 export class QoderExecutor extends BaseExecutor {
-  constructor() {
-    super("qoder", PROVIDERS.qoder);
+  constructor(provider = "qoder") {
+    super(provider, PROVIDERS[provider]);
   }
 
   buildUrl(credentials) {
@@ -564,7 +604,8 @@ export class QoderExecutor extends BaseExecutor {
   //   - body encoded with QoderEncodeBody before signing
   //   - COSY headers built from the *encoded* body bytes
   //   - response stream re-wrapped from {statusCodeValue, body} to OpenAI SSE
-  async execute({ model, body, stream, credentials, signal, log, proxyOptions = null }) {
+  async execute({ model, body, stream, credentials, signal, log, proxyOptions = null, modelConfig = null }) {
+    credentials = { ...credentials, provider: this.provider };
     // PAT (pt-...) → exchange for short-lived job token + resolve userId so
     // downstream COSY signing + catalog fetch work. Device tokens (dt-...) and
     // job tokens (jt-...) skip this and are used directly.
@@ -606,7 +647,7 @@ export class QoderExecutor extends BaseExecutor {
     let qoderKey;
     let payload;
     try {
-      ({ qoderKey, payload } = await buildQoderRequestBody({ model, body, credentials, log, proxyOptions, signal }));
+      ({ qoderKey, payload } = await buildQoderRequestBody({ model, body, credentials, log, proxyOptions, signal, modelConfig }));
     } catch (err) {
       const fakeResp = new Response(
         JSON.stringify({ error: { message: err.message } }),
@@ -630,6 +671,9 @@ export class QoderExecutor extends BaseExecutor {
           name: credentials.displayName || "",
           email: credentials.email || "",
           machineId: psd.machineId || "",
+          machineToken: psd.machineToken || "",
+          provider: this.provider,
+          providerSpecificData: psd,
         },
       );
     } catch (err) {
@@ -676,19 +720,22 @@ export class QoderExecutor extends BaseExecutor {
       return { response, url, headers, transformedBody: payload };
     }
 
-    const wrapped = await wrapQoderSSE(response, `qoder/${qoderKey}`);
+    const wrapped = await wrapQoderSSE(response, `${this.provider}/${qoderKey}`);
     return { response: wrapped, url, headers, transformedBody: payload };
   }
 
   // Qoder device tokens don't refresh through OAuth — the upstream returns
   // 403 for our flow. Surfacing failure via 401-on-chat is enough; the
   // dashboard tells users to re-login when their token expires (~30 days).
-  async refreshCredentials() {
-    return null;
+  async refreshCredentials(credentials, log, proxyOptions = null) {
+    return this.provider === "qoderwork-cn"
+      ? refreshQoderCnToken(credentials?.refreshToken, log, proxyOptions)
+      : null;
   }
 
-  needsRefresh() {
-    return false;
+  needsRefresh(credentials) {
+    return this.provider === "qoderwork-cn" && !!credentials?.refreshToken
+      && shouldRefreshCredentials(this.provider, credentials);
   }
 }
 

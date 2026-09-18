@@ -96,6 +96,9 @@ async function defaultUploadImage({ buffer, mediaType, credentials, proxyOptions
     name: credentials.displayName || "",
     email: credentials.email || "",
     machineId: psd.machineId || "",
+    machineToken: psd.machineToken || "",
+    provider: credentials.provider,
+    providerSpecificData: psd,
   });
   const headers = {
     ...cosyHeaders,
