@@ -1,8 +1,39 @@
+import { QODER_CN_PROFILE } from "../../shared/qoder/profiles.js";
 import { PROVIDERS, PROVIDER_OAUTH } from "../../config/providers.js";
 import { OAUTH_ENDPOINTS, GITHUB_COPILOT, buildKimiHeaders } from "../../config/appConstants.js";
 import { proxyAwareFetch } from "../../utils/proxyFetch.js";
 import { dedupRefresh } from "./dedup.js";
 import { buildExternalIdpRefreshParams } from "../../../src/lib/oauth/kiroExternalIdp.js";
+
+export async function refreshQoderCnToken(refreshToken, log, proxyOptions = null) {
+  if (!refreshToken) return null;
+  return dedupRefresh("qoderwork-cn", refreshToken, async () => {
+    try {
+      const response = await proxyAwareFetch(QODER_CN_PROFILE.refreshUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+        signal: AbortSignal.timeout(15000),
+      }, proxyOptions);
+      if (!response.ok) {
+        log?.warn?.("TOKEN_REFRESH", `Qoder CN refresh failed: HTTP ${response.status}`);
+        return response.status === 401 || response.status === 403 ? { error: "invalid_grant" } : null;
+      }
+      const data = await response.json();
+      const accessToken = data.device_token || data.token || data.access_token;
+      if (!accessToken) return null;
+      const { QoderService } = await import("../../../src/lib/oauth/services/qoder.js");
+      return {
+        accessToken,
+        refreshToken: data.refresh_token || refreshToken,
+        expiresAt: new Date(QoderService.parseExpiry(data.expires_at, data.expires_in)).toISOString(),
+      };
+    } catch (error) {
+      log?.warn?.("TOKEN_REFRESH", `Qoder CN refresh failed: ${error.message}`);
+      return null;
+    }
+  }, log);
+}
 
 let _xaiServiceSingleton = null;
 export async function refreshXaiToken(refreshToken, log) {

@@ -26,6 +26,7 @@ import {
   getOllamaUsage,
   getVercelAiGatewayUsage,
   getQoderUsage,
+  getQoderCnUsage,
 } from "./usage/misc.js";
 
 /**
@@ -47,6 +48,7 @@ const USAGE_HANDLERS = {
     const resolved = await resolveQoderCredentials(c, c.proxyOptions).catch(() => null);
     return getQoderUsage(resolved?.accessToken || c.accessToken, c.proxyOptions);
   },
+  "qoderwork-cn": (c) => getQoderCnUsage(c.accessToken, c.proxyOptions),
   iflow: (c) => getIflowUsage(c.accessToken),
   ollama: (c) => getOllamaUsage(c.apiKey, c.providerSpecificData, c.proxyOptions),
   glm: (c) => getGlmUsage(c.apiKey, c.provider, c.proxyOptions),

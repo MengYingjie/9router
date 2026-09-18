@@ -482,6 +482,7 @@ export function parseQuotaData(provider, data) {
         }
         break;
 
+      case "qoderwork-cn":
       case "qoder":
         // Qoder ships a `user` quota and (optionally) an `organization`
         // quota, both with same shape: {total, used, remaining, unit, resetAt}.
@@ -497,7 +498,7 @@ export function parseQuotaData(provider, data) {
               return;
             }
             normalizedQuotas.push({
-              name: quotaType === "user" ? "Personal" : quotaType === "organization" ? "Organization" : quotaType,
+              name: quotaType === "user" ? "Personal" : quotaType === "organization" ? "Organization" : quotaType === "addOn" ? "Add-on" : quotaType,
               used: quota.used || 0,
               total: quota.total || 0,
               unit: quota.unit,

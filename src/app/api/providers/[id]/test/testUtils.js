@@ -19,6 +19,7 @@ import {
   KIMCHI_CONFIG,
 } from "@/lib/oauth/constants/oauth";
 import { buildClineHeaders } from "@/shared/utils/clineAuth";
+import { QODER_CN_PROFILE } from "open-sse/shared/qoder/profiles.js";
 
 // OAuth provider test endpoints
 const OAUTH_TEST_CONFIG = {
@@ -73,6 +74,15 @@ const OAUTH_TEST_CONFIG = {
     authHeader: "Authorization",
     authPrefix: "Bearer ",
     refreshable: false,
+  },
+  "qoderwork-cn": {
+    // CN openapi userinfo; 设备令牌可刷新（CN 桌面端 deviceToken/refresh 可用）。
+    url: "https://openapi.qoder.com.cn/api/v1/userinfo",
+    method: "GET",
+    authHeader: "Authorization",
+    authPrefix: "Bearer ",
+    extraHeaders: { "User-Agent": QODER_CN_PROFILE.userAgent },
+    refreshable: true,
   },
   kimi: { checkExpiry: true, refreshable: true },
   "kimi-coding": { checkExpiry: true, refreshable: true },
@@ -241,6 +251,12 @@ async function refreshOAuthToken(connection) {
 
     if (provider === "codex" || provider === "grok-cli" || provider === "xai") {
       return await refreshProviderCredentials(provider, connection, console);
+    }
+
+    if (provider === "qoderwork-cn") {
+      // CN device token refresh（intl 的 center.qoder.sh 刷新对设备流返回 403，故不并入）。
+      const { refreshQoderCnToken } = await import("open-sse/services/tokenRefresh/providers.js");
+      return await refreshQoderCnToken(refreshToken, console);
     }
 
     if (provider === "claude") {

@@ -4,6 +4,7 @@
 
 import { proxyAwareFetch } from "../../utils/proxyFetch.js";
 import { U } from "./shared.js";
+import { QODER_CN_PROFILE } from "../../shared/qoder/profiles.js";
 
 export { getGlmUsage } from "./glm.js";
 
@@ -193,18 +194,20 @@ export async function getVercelAiGatewayUsage(apiKey, proxyOptions = null) {
   }
 }
 
-export async function getQoderUsage(accessToken, proxyOptions = null) {
+export async function getQoderUsage(accessToken, proxyOptions = null, options = {}) {
   if (!accessToken) {
     return { message: "Qoder usage unavailable: no access token" };
   }
   try {
     const response = await proxyAwareFetch(
-      U("qoder").url,
+      options.url || U("qoder").url,
       {
         method: "GET",
         headers: {
           Authorization: `Bearer ${accessToken}`,
           Accept: "application/json",
+          // CN openapi rejects quota requests without the desktop UA.
+          ...(options.userAgent ? { "User-Agent": options.userAgent } : {}),
         },
       },
       proxyOptions,
@@ -236,6 +239,19 @@ export async function getQoderUsage(accessToken, proxyOptions = null) {
         unit: userQuota.unit || "credits",
         resetAt,
       },
+      // QoderWork CN splits credits into three layers; only CN requests this
+      // one so intl quota output stays byte-identical.
+      ...(options.includeAddOn
+        ? {
+            addOn: {
+              total: Number(body.addOnQuota?.total) || 0,
+              used: Number(body.addOnQuota?.used) || 0,
+              remaining: Number(body.addOnQuota?.remaining) || 0,
+              unit: body.addOnQuota?.unit || "credits",
+              resetAt,
+            },
+          }
+        : {}),
       organization: {
         total: Number(orgQuota.total) || 0,
         used: Number(orgQuota.used) || 0,
@@ -253,4 +269,13 @@ export async function getQoderUsage(accessToken, proxyOptions = null) {
   } catch (error) {
     return { message: `Qoder connected. Unable to fetch usage: ${error.message}` };
   }
+}
+
+/** QoderWork CN quota — CN host + desktop User-Agent + the addOn credit layer. */
+export async function getQoderCnUsage(accessToken, proxyOptions = null) {
+  return getQoderUsage(accessToken, proxyOptions, {
+    url: QODER_CN_PROFILE.quotaUrl,
+    userAgent: QODER_CN_PROFILE.userAgent,
+    includeAddOn: true,
+  });
 }

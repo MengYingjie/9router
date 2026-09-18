@@ -2,6 +2,7 @@ import { PROVIDERS } from "../config/providers.js";
 import { OAUTH_ENDPOINTS, REFRESH_LEAD_MS } from "../config/appConstants.js";
 import {
   refreshXaiToken,
+  refreshQoderCnToken,
   refreshAccessToken,
   refreshKimiToken,
   refreshClineToken,
@@ -133,6 +134,7 @@ function vertexRefreshHandler(c, log) {
 }
 
 const REFRESH_HANDLERS = {
+  "qoderwork-cn": (c, log) => refreshQoderCnToken(c.refreshToken, log),
   "gemini-cli": (c, log) => refreshGoogleToken(c.refreshToken, PROVIDERS["gemini-cli"].clientId, PROVIDERS["gemini-cli"].clientSecret, log),
   antigravity: (c, log) => refreshGoogleToken(c.refreshToken, PROVIDERS.antigravity.clientId, PROVIDERS.antigravity.clientSecret, log),
   claude: (c, log) => refreshClaudeOAuthToken(c.refreshToken, log),
