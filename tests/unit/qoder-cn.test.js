@@ -22,6 +22,9 @@ import { qoderInferenceBase } from "../../open-sse/shared/qoder/constants.js";
 import { buildCosyHeaders } from "../../open-sse/shared/qoder/cosy.js";
 import { resolveQoderModels } from "../../open-sse/services/qoderModels.js";
 import { __test__ as qoderInternals } from "../../open-sse/executors/qoder.js";
+import qoderRegistry from "../../open-sse/providers/registry/qoder.js";
+import qoderCnRegistry from "../../open-sse/providers/registry/qoderwork-cn.js";
+import { getProviderIconSrc } from "../../src/shared/utils/providerIcon.js";
 
 const CN_CREDS = {
   provider: "qoderwork-cn",
@@ -51,6 +54,12 @@ describe("qoderwork-cn 注册表", () => {
     const tiers = ["ultimate", "performance", "efficient", "lite"];
     const intlShared = PROVIDER_MODELS.qd.map((m) => m.id).filter((k) => !tiers.includes(k));
     for (const key of intlShared) expect(cnKeys).toContain(key);
+  });
+
+  it("CN 与 intl 使用同一提供商头像", () => {
+    expect(getProviderIconSrc("qoderwork-cn")).toBe(getProviderIconSrc("qoder"));
+    expect(getProviderIconSrc("qoderwork-cn")).toBe("/providers/qoder.png");
+    expect(qoderCnRegistry.display.color).toBe(qoderRegistry.display.color);
   });
 
   it("CN OAuth 配置指向 CN 主机并带设备 client_id", () => {

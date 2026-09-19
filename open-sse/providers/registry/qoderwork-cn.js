@@ -8,7 +8,7 @@ export default {
   display: {
     name: "Qoder CN",
     icon: "water_drop",
-    color: "#DB2777",
+    color: "#EC4899",
     website: "https://qoder.com.cn",
     notice: { signupUrl: "https://qoder.com.cn" },
   },
