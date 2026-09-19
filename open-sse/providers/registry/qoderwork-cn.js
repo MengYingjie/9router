@@ -31,7 +31,7 @@ export default {
     { id: "qmodel", name: "Qwen3.7-Plus" },
     { id: "q37fmodel", name: "Qwen3.7-Flash" },
     { id: "dmodel", name: "DeepSeek-V4-Pro" },
-    { id: "dfmodel", name: "DeepSeek-V4-Flash" },
+    { id: "dfmodel", name: "DeepSeek-Flash" },
     { id: "gmodel", name: "GLM-5.3" },
     { id: "gfmodel", name: "GLM-5.3-Flash" },
     { id: "gm51model", name: "GLM-5.2" },

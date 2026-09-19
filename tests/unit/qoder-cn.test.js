@@ -56,6 +56,10 @@ describe("qoderwork-cn 注册表", () => {
     for (const key of intlShared) expect(cnKeys).toContain(key);
   });
 
+  it("dfmodel 使用 CN 网关发布的显示名", () => {
+    expect(PROVIDER_MODELS.qdcn.find((m) => m.id === "dfmodel")?.name).toBe("DeepSeek-Flash");
+  });
+
   it("CN 与 intl 使用同一提供商头像", () => {
     expect(getProviderIconSrc("qoderwork-cn")).toBe(getProviderIconSrc("qoder"));
     expect(getProviderIconSrc("qoderwork-cn")).toBe("/providers/qoder.png");
