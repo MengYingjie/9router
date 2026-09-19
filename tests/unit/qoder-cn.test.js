@@ -46,6 +46,13 @@ describe("qoderwork-cn 注册表", () => {
     expect(PROVIDER_ID_TO_ALIAS["qoderwork-cn"]).toBe("qdcn");
   });
 
+  it("CN 模型清单与 intl 对齐（除订阅档位外的 intl 模型键全部存在）", () => {
+    const cnKeys = PROVIDER_MODELS.qdcn.map((m) => m.id);
+    const tiers = ["ultimate", "performance", "efficient", "lite"];
+    const intlShared = PROVIDER_MODELS.qd.map((m) => m.id).filter((k) => !tiers.includes(k));
+    for (const key of intlShared) expect(cnKeys).toContain(key);
+  });
+
   it("CN OAuth 配置指向 CN 主机并带设备 client_id", () => {
     const oauth = PROVIDER_OAUTH["qoderwork-cn"];
     expect(oauth.loginUrl).toContain("qoder.com.cn/device/selectAccounts");

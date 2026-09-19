@@ -267,16 +267,24 @@ export const PROVIDER_CAPABILITIES = {
   },
   // QoderWork CN (qoderwork-cn) 与 intl 共用私有聊天协议，但 CN 网关接受完整的
   // reasoning_effort 枚举(none..max) 原样透传，因此使用 qoder thinkingFormat，
-  // 由 executor 写入 parameters.reasoning_effort。CN 型号清单来自 qdcn 注册表。
+  // 由 executor 写入 parameters.reasoning_effort。CN 型号清单与 intl 对齐
+  // （镜像 2026-09-19 CN 网关 /algo/api/v2/model/list 实时目录；CN 无
+  // ultimate/performance/efficient/lite 档位，多 q37fmodel/gm51model 两个
+  // 区域特有型号）。reasoning 标志取各型号网关实时 is_reasoning：
+  // dfmodel/kmodel_latest/mmodel 为 false，其余 true。
   "qoderwork-cn": {
     "auto":           { vision: true, reasoning: true, thinkingFormat: "qoder", thinkingCanDisable: true, maxOutput: 64000 },
-    "qmodel_preview": { vision: true, reasoning: true, thinkingFormat: "qoder", thinkingCanDisable: true, maxOutput: 64000 },
+    "qmodel_38max":   { vision: true, reasoning: true, thinkingFormat: "qoder", thinkingCanDisable: true, maxOutput: 64000 },
+    "qfmodel":        { vision: true, reasoning: true, thinkingFormat: "qoder", thinkingCanDisable: true, maxOutput: 64000 },
     "qmodel_latest":  { vision: true, reasoning: true, thinkingFormat: "qoder", thinkingCanDisable: true, maxOutput: 64000 },
     "qmodel":         { vision: true, reasoning: true, thinkingFormat: "qoder", thinkingCanDisable: true, maxOutput: 64000 },
-    "q36fmodel":      { vision: true, reasoning: true, thinkingFormat: "qoder", thinkingCanDisable: true, maxOutput: 64000 },
+    "q37fmodel":      { vision: true, reasoning: true, thinkingFormat: "qoder", thinkingCanDisable: true, maxOutput: 64000 },
     "dmodel":         { vision: true, reasoning: true, thinkingFormat: "qoder", thinkingCanDisable: true, maxOutput: 64000 },
     "dfmodel":        { vision: true, reasoning: false, thinkingFormat: "qoder", thinkingCanDisable: true, maxOutput: 64000 },
+    "gmodel":         { vision: true, reasoning: true, thinkingFormat: "qoder", thinkingCanDisable: true, maxOutput: 64000 },
+    "gfmodel":        { vision: true, reasoning: true, thinkingFormat: "qoder", thinkingCanDisable: true, maxOutput: 64000 },
     "gm51model":      { vision: true, reasoning: true, thinkingFormat: "qoder", thinkingCanDisable: true, maxOutput: 64000 },
+    "kmodel_latest":  { vision: true, reasoning: false, thinkingFormat: "qoder", thinkingCanDisable: true, maxOutput: 64000 },
     "kmodel":         { vision: true, reasoning: true, thinkingFormat: "qoder", thinkingCanDisable: true, maxOutput: 64000 },
     "mmodel":         { reasoning: false, thinkingFormat: "openai", thinkingCanDisable: true, maxOutput: 64000 },
   },

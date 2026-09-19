@@ -21,15 +21,21 @@ export default {
     timeoutMs: 120000,
     usage: { url: profile.quotaUrl },
   },
+  // 与 intl(qoder) 对齐的静态兜底清单，镜像 CN 网关 /algo/api/v2/model/list
+  // 的实时目录（2026-09-19 抓取）。运行时以连接级实时目录为准。
   models: [
     { id: "auto", name: "Auto" },
-    { id: "qmodel_preview", name: "Qwen3.8-Max-Preview" },
+    { id: "qmodel_38max", name: "Qwen3.8-Max" },
+    { id: "qfmodel", name: "Qwen3.8-Flash" },
     { id: "qmodel_latest", name: "Qwen3.7-Max" },
     { id: "qmodel", name: "Qwen3.7-Plus" },
-    { id: "q36fmodel", name: "Qwen3.6-Flash" },
+    { id: "q37fmodel", name: "Qwen3.7-Flash" },
     { id: "dmodel", name: "DeepSeek-V4-Pro" },
     { id: "dfmodel", name: "DeepSeek-V4-Flash" },
+    { id: "gmodel", name: "GLM-5.3" },
+    { id: "gfmodel", name: "GLM-5.3-Flash" },
     { id: "gm51model", name: "GLM-5.2" },
+    { id: "kmodel_latest", name: "Kimi-K3" },
     { id: "kmodel", name: "Kimi-K2.7-Code" },
     { id: "mmodel", name: "MiniMax-M2.7" },
   ],
