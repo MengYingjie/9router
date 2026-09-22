@@ -552,8 +552,9 @@ export function parseQuotaData(provider, data) {
 
       case "qoder":
       case "qoder-cn":
-        // Qoder ships a `user` quota and (optionally) an `organization`
-        // quota, both with same shape: {total, used, remaining, unit, resetAt}.
+        // Qoder ships a `user` quota, an optional `addOn` (resource packs)
+        // quota and (optionally) an `organization` quota, all with the same
+        // shape: {total, used, remaining, unit, resetAt}.
         // Skip an organization bucket when its total is 0 — most personal
         // Qoder accounts won't have one and rendering "0/0" is misleading.
         // Don't forward Qoder's `remaining` field: it's an absolute credit
@@ -566,7 +567,7 @@ export function parseQuotaData(provider, data) {
               return;
             }
             normalizedQuotas.push({
-              name: quotaType === "user" ? "Personal" : quotaType === "organization" ? "Organization" : quotaType,
+              name: quotaType === "user" ? "Personal" : quotaType === "organization" ? "Organization" : quotaType === "addOn" ? "Add-on" : quotaType,
               used: quota.used || 0,
               total: quota.total || 0,
               unit: quota.unit,
