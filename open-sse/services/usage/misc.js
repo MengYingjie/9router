@@ -262,6 +262,13 @@ export async function getQoderUsage(accessToken, proxyOptions = null, providerId
       ? Number(body.expiresAt)
       : null;
     const resetAt = expiresAtMs ? new Date(expiresAtMs).toISOString() : null;
+    // Qoder splits credits into up to three layers: plan quota (`userQuota`),
+    // resource packs (`addOnQuota`) and org packages (`orgResourcePackage`).
+    // Personal accounts commonly have userQuota.total = 0 with the real
+    // balance living in addOnQuota, so dropping it would render every card
+    // as "0 / ∞" even while credits remain. Include addOn only when the
+    // provider actually reports it.
+    const addOnQuota = body.addOnQuota;
     const quotas = {
       user: {
         total: Number(userQuota.total) || 0,
@@ -270,6 +277,17 @@ export async function getQoderUsage(accessToken, proxyOptions = null, providerId
         unit: userQuota.unit || "credits",
         resetAt,
       },
+      ...(addOnQuota
+        ? {
+            addOn: {
+              total: Number(addOnQuota.total) || 0,
+              used: Number(addOnQuota.used) || 0,
+              remaining: Number(addOnQuota.remaining) || 0,
+              unit: addOnQuota.unit || "credits",
+              resetAt,
+            },
+          }
+        : {}),
       organization: {
         total: Number(orgQuota.total) || 0,
         used: Number(orgQuota.used) || 0,
